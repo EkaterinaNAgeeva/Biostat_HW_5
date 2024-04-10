@@ -1,0 +1,137 @@
+---
+title: "HW_5"
+author: "AgeevaEN"
+date: "2024-04-07"
+output: html_document
+---
+**Подгружаемнеобходимые библиотеки**
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+```
+**Загружаем датасет**
+```{r}
+cancer <- read.csv(file = "D:/Учеба/биостатистика/wisconsin_breast_cancer.csv")
+
+#Посмотреть информацию по датасету 
+str(cancer)
+
+```
+**Задание 1 (2 балла)**
+
+Создайте регрессионную модель, которая бы описывала связь среднего радиуса опухоли и средней площади (а), среднего периметра (б), средней симметричности (в).
+```{r}
+# Добавление интерсепта
+cancer$intercept <- 1
+
+
+X <- cancer[, c("intercept", "area_mean", "perimeter_mean", "symmetry_mean")]
+
+y <- cancer$radius_mean
+
+reg_model <- lm(y ~ ., data = X)
+
+```
+
+Постройте графики, на которых отразите регрессионную прямую, и прокомментируйте свои находки.
+```{r}
+library(ggplot2)
+
+# График для средней площади
+plot_area <- ggplot(cancer, aes(x = area_mean, y = radius_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Зависимость среднего радиуса опухоли от средней площади",
+       x = "area_mean",
+       y = "radius_mean")
+
+# Нрафикдля среднего периметра
+plot_perimeter <- ggplot(cancer, aes(x = perimeter_mean, y = radius_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Зависимость среднего радиуса опухоли от периметра",
+       x = "perimeter_mean",
+       y = "radius_mean")
+
+# График для симметрии
+plot_symmetry <- ggplot(cancer, aes(x = symmetry_mean, y = radius_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Зависимость среднего радиуса опухоли от средней симметричности",
+       x = "symmetry_mean",
+       y = "radius_mean")
+
+
+print(plot_area)
+print(plot_perimeter)
+print(plot_symmetry)
+```
+График рассеяния отображает зависимость среднего радиуса опухоли от средней площади, периметра и симметричности соответственно. На каждом графике также отображается регрессионная прямая.
+
+**Выводы*
+Явную положительную корреляцию мы можем наблюдать в зависимости радиуса опухоли от ее периметра.
+Положительная корреляция не без претензий есть между средним радиусом и средней плотностью.
+И совершенно отсутствует всякая корреляция между радиусом опузоли и ее симметрией.
+
+**Задание 2 (2 балла)**
+Пусть колонка с диагнозом принимает следующие значения: злокачественная опухоль — 1, а доброкачественная — 0.
+
+Сначала заменим занчения М и В на 1 и 0
+```{r}
+cancer$diagnosis <- ifelse(cancer$diagnosis == 'M', 1, 0)
+#Проверяем
+str(cancer)
+```
+Постройте модель, которая бы прогнозировала вероятность возникновения злокачественной опухоли от среднего радиуса (а), средней площади (б), средней текстуры (в).
+```{r}
+# модель логистической регрессии
+gfit1 <-
+  glm(diagnosis ~ radius_mean + area_mean + texture_mean, data = cancer, family = "binomial")
+summary(gfit1)
+```
+
+Постройте графики. 
+```{r}
+# График зависимости от радиуса
+plot_radius_mean <- ggplot(cancer, aes(x = radius_mean, y = diagnosis)) +
+  geom_point() +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  theme_bw() +
+  labs(title = "Зависимость типа опухоли от среднего радиуса",
+       x = "area_mean",
+       y = "radius_mean")
+
+# График зависимости от площади
+plot_area_mean <- ggplot(cancer, aes(x = area_mean, y = diagnosis)) +
+  geom_point() +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  theme_bw() +
+  labs(title = "Зависимость типа опухоли от средней площади",
+       x = "area_mean",
+       y = "diagnosis")
+
+# График зависимости от текстуры
+plot_texture_mean <- ggplot(cancer, aes(x = texture_mean, y = diagnosis)) +
+  geom_point() +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  theme_bw() +
+  labs(title = "Зависимость типа опухоли от текстуры",
+       x = "area_mean")
+
+# Вывод графиков
+print(plot_radius_mean)
+print(plot_area_mean)
+print(plot_texture_mean)
+```
+
+Создайте модель, которая бы прогнозировала вероятность возникновения злокачественной опухоли от всех трех перечисленных факторов.
+```{r}
+gfit2 <-
+  glm(diagnosis ~ radius_mean * area_mean * texture_mean,
+      data = cancer,
+      family = "binomial")
+
+summary(gfit2)
+```
+
